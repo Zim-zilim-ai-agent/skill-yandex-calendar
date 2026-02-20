@@ -154,8 +154,6 @@ def test_get_todos_none_and_fallback_events_scan():
     c.get_todo_calendar = Mock(return_value=None)
     assert c.get_todos() == []
 
-    cal = FakeCalendar()
-
     class NoTodosCalendar(FakeCalendar):
         def todos(self):
             raise AttributeError
