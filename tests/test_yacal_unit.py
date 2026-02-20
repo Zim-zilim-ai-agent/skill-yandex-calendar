@@ -60,6 +60,11 @@ def test_init_requires_auth():
         yacal.YandexCalendarClient()
 
 
+def test_init_with_basic_auth():
+    c = yacal.YandexCalendarClient(username="u", password="p")
+    assert c is not None
+
+
 def test_get_calendar_by_name_and_default():
     c = make_client()
     c.get_calendars = Mock(return_value=[FakeCalendar("a"), FakeCalendar("b")])
@@ -69,10 +74,22 @@ def test_get_calendar_by_name_and_default():
     assert c.get_calendar("missing") is None
 
 
+def test_get_calendar_empty_returns_none():
+    c = make_client()
+    c.get_calendars = Mock(return_value=[])
+    assert c.get_calendar() is None
+
+
 def test_get_todo_calendar_by_url_suffix():
     c = make_client()
     c.get_calendars = Mock(return_value=[FakeCalendar(url="https://x/1"), FakeCalendar(url="https://x/todos/2")])
     assert c.get_todo_calendar().url.endswith("/2")
+
+
+def test_get_todo_calendar_none_when_missing():
+    c = make_client()
+    c.get_calendars = Mock(return_value=[FakeCalendar(url="https://x/1")])
+    assert c.get_todo_calendar() is None
 
 
 def test_get_events_handles_missing_calendar():
@@ -112,6 +129,14 @@ def test_create_event_minimal_and_with_rrule_and_alarm():
     assert cal.saved_payloads and isinstance(cal.saved_payloads[0], (bytes, bytearray))
 
 
+def test_create_event_with_defaults_and_calendar_lookup():
+    c = make_client()
+    cal = FakeCalendar()
+    c.get_calendar = Mock(return_value=cal)
+    out = c.create_event(title="Auto")
+    assert out["saved"] is True
+
+
 def test_update_event_and_not_found():
     c = make_client()
     cal = FakeCalendar()
@@ -119,10 +144,20 @@ def test_update_event_and_not_found():
     ev = FakeEvent(comp)
     cal._events = [ev]
 
-    got = c.update_event("u1", title="new", calendar=cal)
+    got = c.update_event(
+        "u1",
+        title="new",
+        description="d2",
+        location="l2",
+        start=dt.datetime(2026, 1, 1, 1, 0, 0),
+        end=dt.datetime(2026, 1, 1, 2, 0, 0),
+        calendar=cal,
+    )
     assert got is ev
     assert ev.saved is True
     assert comp["summary"] == "new"
+    assert comp["description"] == "d2"
+    assert comp["location"] == "l2"
 
     assert c.update_event("x", title="new", calendar=cal) is None
 
@@ -139,6 +174,13 @@ def test_delete_event_true_false():
     assert c.delete_event("u2", calendar=cal) is False
 
 
+def test_delete_event_uses_calendar_lookup():
+    c = make_client()
+    cal = FakeCalendar()
+    c.get_calendar = Mock(return_value=cal)
+    assert c.delete_event("missing") is False
+
+
 def test_search_events_case_insensitive():
     c = make_client()
     cal = FakeCalendar()
@@ -147,6 +189,14 @@ def test_search_events_case_insensitive():
     cal._events = [ev1, ev2]
     res = c.search_events("alp", calendar=cal)
     assert res == [ev1]
+
+
+def test_search_events_uses_calendar_lookup():
+    c = make_client()
+    cal = FakeCalendar()
+    cal._events = []
+    c.get_calendar = Mock(return_value=cal)
+    assert c.search_events("x") == []
 
 
 def test_get_todos_none_and_fallback_events_scan():
@@ -186,6 +236,15 @@ def test_create_complete_delete_todo_flow():
 
     assert c.delete_todo("todo1", todo_calendar=cal) is True
     assert todo.deleted is True
+
+
+def test_complete_and_delete_todo_with_lookup_and_false():
+    c = make_client()
+    cal = FakeCalendar(url="https://x/todos")
+    c.get_todo_calendar = Mock(return_value=cal)
+    c.get_todos = Mock(return_value=[])
+    assert c.complete_todo("missing") is False
+    assert c.delete_todo("missing") is False
 
 
 def test_create_todo_no_calendar_returns_none():
