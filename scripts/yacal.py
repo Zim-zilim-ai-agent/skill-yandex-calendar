@@ -344,7 +344,7 @@ def todo_to_dict(todo: Any) -> Dict[str, Any]:
     }
 
 
-def main():
+def main():  # pragma: no cover
     parser = argparse.ArgumentParser(description='Yandex Calendar CLI')
     parser.add_argument('--token', help='OAuth token', default=os.getenv('YANDEX_CALENDAR_OAUTH_TOKEN'))
     parser.add_argument('--username', help='Yandex username (for Basic auth)', default=os.getenv('YANDEX_CALENDAR_USERNAME'))
@@ -567,5 +567,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main()

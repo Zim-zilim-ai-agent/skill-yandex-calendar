@@ -1,174 +1,47 @@
+---
+name: yandex-calendar
+description: Manage Yandex Calendar over CalDAV with basic auth or OAuth. Use for listing calendars, querying events by date range, creating/updating/deleting events, and working with VTODO tasks from CLI automation.
+---
+
 # Yandex Calendar Skill
 
-Контроль Яндекс Календаря через CalDAV API с Basic аутентификацией (логин + пароль приложения).
+Automate Yandex Calendar via CalDAV from the terminal.
 
-## Возможности
+## Capabilities
 
-- **Подключение** через Basic аутентификацию (логин + пароль приложения)
-- **Просмотр календарей** (список, свойства)
-- **Чтение событий** за указанный период (день, неделя, месяц, произвольный интервал)
-- **Создание событий** с полями: заголовок, описание, место, время начала/окончания, повторения, напоминания
-- **Обновление событий** (изменение любых полей)
-- **Удаление событий**
-- **Поиск событий** по тексту или критериям
-- **Экспорт событий** в iCalendar (.ics) или JSON
-- **Импорт событий** из iCalendar
+- Authenticate via Basic auth (`username` + app password) or OAuth token.
+- List calendars.
+- Read events (`--today`, `--from`, `--to`).
+- Create, update, delete, search events.
+- List, create, complete, delete todos.
+- Output JSON for automation pipelines.
 
-## Установка
-
-### Зависимости
-
-- Python 3.9+
-- Библиотека `caldav` (и её зависимости: `vobject`, `lxml`, `requests`)
-
-Установите через `uv` (рекомендуется) или `pip`:
+## Quick start
 
 ```bash
-cd /home/evm/.openclaw/workspace/skills/yandex‑calendar
-uv venv
-source .venv/bin/activate
-uv pip install caldav
+python scripts/yacal.py --username "$YANDEX_CALENDAR_USERNAME" --password "$YANDEX_CALENDAR_PASSWORD" list-calendars
+python scripts/yacal.py --username "$YANDEX_CALENDAR_USERNAME" --password "$YANDEX_CALENDAR_PASSWORD" events --today
 ```
 
-### Конфигурация Basic auth
+## Environment variables
 
-Используйте логин Яндекс‑почты и пароль приложения (сгенерированный в настройках безопасности Яндекс ID).
+- `YANDEX_CALENDAR_USERNAME`
+- `YANDEX_CALENDAR_PASSWORD`
+- `YANDEX_CALENDAR_OAUTH_TOKEN` (optional alternative)
+- `YANDEX_CALENDAR_USER_ID` (optional)
 
-1. **Получите логин и пароль приложения**:
-   - Логин: ваш email Яндекс (`YANDEX_LOGIN`)
-   - Пароль приложения: сгенерируйте в [Яндекс ID → Безопасность → Пароли приложений](https://id.yandex.ru/security/app-passwords)
-   - Сохраните пароль в безопасном месте (например, в менеджере паролей).
+## Examples
 
-2. **Настройте скилл** через переменные окружения или файл конфигурации:
-
-   **Вариант A: переменные окружения**
-   ```bash
-   export YANDEX_CALENDAR_LOGIN="YANDEX_LOGIN"
-   export YANDEX_CALENDAR_PASSWORD="ваш_пароль_приложения"
-   ```
-
-   **Вариант B: файл `.env` в директории скилла**
-   ```
-   YANDEX_CALENDAR_LOGIN=YANDEX_LOGIN
-   YANDEX_CALENDAR_PASSWORD=ваш_пароль_приложения
-   ```
-
-   **Вариант C: передача логина и пароля напрямую в командах**
-   ```bash
-   python scripts/yacal.py --login YANDEX_LOGIN --password ваш_пароль_приложения list-calendars
-   ```
-
-## Использование
-
-### Базовые команды
-
-Все команды выполняются через скрипт `scripts/yacal.py` (или через обёртку `run.sh`).
-
-**Список календарей**
-```bash
-python scripts/yacal.py list-calendars
-```
-
-**События за сегодня**
-```bash
-python scripts/yacal.py events --today
-```
-
-**События за указанный диапазон**
-```bash
-python scripts/yacal.py events --from 2025-02-16 --to 2025-02-20
-```
-
-**Создание события**
-```bash
-python scripts/yacal.py create \
-  --title "Совещание" \
-  --description "Обсуждение проекта" \
-  --location "Конференц-зал" \
-  --start "2025-02-17T10:00:00" \
-  --end "2025-02-17T11:00:00" \
-  --reminder 15   # напоминание за 15 минут
-```
-
-**Обновление события** (по UID)
-```bash
-python scripts/yacal.py update \
-  --uid 12345678-1234-1234-1234-1234567890ab \
-  --title "Новое название"
-```
-
-**Удаление события**
-```bash
-python scripts/yacal.py delete --uid 12345678-1234-1234-1234-1234567890ab
-```
-
-**Поиск событий**
-```bash
-python scripts/yacal.py search --query "совещание"
-```
-
-### Использование из OpenClaw
-
-Скилл можно вызывать прямо из сессии OpenClaw через `exec`:
+Create event:
 
 ```bash
-cd /home/evm/.openclaw/workspace/skills/yandex‑calendar
-python scripts/yacal.py events --today
+python scripts/yacal.py --username "$YANDEX_CALENDAR_USERNAME" --password "$YANDEX_CALENDAR_PASSWORD" \
+  create --title "Planning" --start "2026-02-25T10:00:00" --end "2026-02-25T11:00:00" --reminder 15
 ```
 
-Или создать отдельную команду в `PATH` (например, через симлинк).
-
-## API‑детали
-
-### CalDAV‑эндпоинт
-- **URL**: `https://caldav.yandex.ru/`
-- **Аутентификация**: Basic (логин + пароль приложения). Заголовок `Authorization: Basic <base64(логин:пароль)>` формируется автоматически.
-- **Realm**: `CalDAV`
-
-### Поддерживаемые свойства
-Скилл использует стандартные CalDAV‑свойства (`DAV:`, `CALDAV:`) и расширения Яндекс.
-
-### Ограничения
-- **Частота запросов**: Яндекс может ограничивать количество запросов в минуту (точные лимиты не документированы).
-- **Размер событий**: максимальный размер одного события — ~1 МБ.
-- **Повторения**: поддерживаются стандартные RRULE (ежедневно, еженедельно, ежемесячно, ежегодно).
-- **Напоминания**: поддерживаются уведомления за N минут/часов/дней до начала.
-
-## Примеры интеграции
-
-### Ежедневный дайджест в OpenClaw
-Создайте cron‑задачу, которая каждое утро отправляет список событий на день:
+Create todo:
 
 ```bash
-# В директории скилла
-python scripts/yacal.py events --today --format markdown
+python scripts/yacal.py --username "$YANDEX_CALENDAR_USERNAME" --password "$YANDEX_CALENDAR_PASSWORD" \
+  create-todo --title "Send report" --priority 3 --due "2026-02-26T18:00:00"
 ```
-
-### Автоматическое создание событий из других систем
-Через Webhook или скрипт можно добавлять события в календарь при наступлении определённых условий.
-
-## Устранение неполадок
-
-**Ошибка 401 Unauthorized**
-- Проверьте, что логин и пароль приложения верны.
-- Убедитесь, что пароль приложения не был отозван и имеет доступ к Яндекс Календарю.
-
-**Ошибка 404 Not Found**
-- Возможно, указан неверный URL календаря. Проверьте правильность эндпоинта.
-
-**Ошибка «No calendar found»**
-- Убедитесь, что у пользователя есть хотя бы один календарь в Яндекс Календаре.
-
-**Медленная работа**
-- Яндекс CalDAV может отвечать с задержкой. Рекомендуется кэшировать результаты при частых запросах.
-
-## Безопасность
-
-- Никогда не храните пароль приложения в открытом виде в репозитории.
-- Используйте переменные окружения или зашифрованные конфигурационные файлы.
-- Пароль приложения имеет те же права, что и ваш основной пароль Яндекс, но ограничен только доступом к календарю. Храните его так же осторожно.
-- При необходимости отзовите пароль приложения в настройках безопасности Яндекс ID.
-
-## Лицензия
-
-MIT
