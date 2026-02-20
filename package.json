@@ -1,0 +1,34 @@
+{
+  "name": "yandex-calendar",
+  "version": "1.0.0",
+  "description": "OpenClaw skill for Yandex Calendar control via CalDAV API",
+  "main": "scripts/yacal.py",
+  "scripts": {
+    "test": "python -m pytest tests/",
+    "lint": "ruff check scripts/",
+    "format": "black scripts/"
+  },
+  "keywords": [
+    "openclaw",
+    "skill",
+    "yandex",
+    "calendar",
+    "caldav",
+    "oauth"
+  ],
+  "author": "Zim Assistant",
+  "license": "MIT",
+  "dependencies": {
+    "caldav": ">=2.2.0"
+  },
+  "engines": {
+    "python": ">=3.9"
+  },
+  "files": [
+    "SKILL.md",
+    "README.md",
+    "scripts/",
+    "run.sh",
+    ".env.example"
+  ]
+}
