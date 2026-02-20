@@ -47,12 +47,9 @@ import sys
 import json
 import datetime
 import argparse
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 
-import caldav
 from caldav import DAVClient, Principal, Calendar, Event
-from caldav.elements import cdav
-import icalendar
 from icalendar import Calendar as ICalendar, Event as IEvent, Todo as VTodo, Alarm, vRecur
 from dateutil import parser as date_parser
 
@@ -357,7 +354,7 @@ def main():
     subparsers = parser.add_subparsers(dest='command', required=True)
     
     # List calendars
-    list_parser = subparsers.add_parser('list-calendars', help='List available calendars')
+    subparsers.add_parser('list-calendars', help='List available calendars')
     
     # Events
     events_parser = subparsers.add_parser('events', help='List events')
@@ -395,7 +392,7 @@ def main():
     search_parser.add_argument('--query', required=True, help='Search query')
     
     # List todos
-    list_todos_parser = subparsers.add_parser('list-todos', help='List todos')
+    subparsers.add_parser('list-todos', help='List todos')
     
     # Create todo
     create_todo_parser = subparsers.add_parser('create-todo', help='Create todo')
